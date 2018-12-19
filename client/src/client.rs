@@ -29,6 +29,8 @@ use queryable;
 /// crate-specific Error type;
 pub type Result<T> = result::Result<T, Error>;
 
+type JsonRpcClient = jsonrpc::client::Client<jsonrpc::bitcoind_client::SimpleBitcoindClient>;
+
 /// Shorthand for converting a variable into a serde_json::Value.
 fn into_json<T>(val: T) -> Result<serde_json::Value>
 where
@@ -104,7 +106,7 @@ fn handle_defaults<'a, 'b>(
 
 /// Client implements a JSON-RPC client for the Bitcoin Core daemon or compatible APIs.
 pub struct Client {
-    client: jsonrpc::client::Client,
+    client: JsonRpcClient,
 }
 
 impl Client {
@@ -113,12 +115,17 @@ impl Client {
         debug_assert!(pass.is_none() || user.is_some());
 
         Client {
-            client: jsonrpc::client::Client::new(url, user, pass),
+            client: jsonrpc::client::Client::new(
+                jsonrpc::bitcoind_client::SimpleBitcoindClient::new(),
+                url,
+                user,
+                pass
+            ),
         }
     }
 
     /// Create a new Client.
-    pub fn from_jsonrpc(client: jsonrpc::client::Client) -> Client {
+    pub fn from_jsonrpc(client: JsonRpcClient) -> Client {
         Client {
             client: client,
         }
